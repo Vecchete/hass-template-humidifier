@@ -108,7 +108,7 @@ async def async_setup_platform(
     hass: HomeAssistant, config: ConfigType, async_add_entities, discovery_info=None
 ):
     """Set up the Template Humidifier."""
-    await async_setup_reload_service(hass, DOMAIN, [HUMIDIFIER_DOMAIN])
+    await async_setup_reload_service(hass, DOMAIN, PLATFORMS)
     await async_setup_template_platform(
         hass,
         HUMIDIFIER_DOMAIN,
