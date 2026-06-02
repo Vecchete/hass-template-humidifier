@@ -63,7 +63,7 @@ DEFAULT_NAME = "Template Humidifier"
 DEFAULT_TARGET_HUMIDITY = 50
 DEFAULT_TARGET_HUMIDITY_STEP = 1.0
 DOMAIN = "humidifier_template"
-PLATFORMS = [HUMIDIFIER_DOMAIN]
+PLATFORMS = ["humidifier"]
 
 
 def _humidity(value):
