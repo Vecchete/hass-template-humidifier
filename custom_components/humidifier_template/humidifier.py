@@ -22,7 +22,10 @@ from homeassistant.components.humidifier.const import (
     DEFAULT_MIN_HUMIDITY,
 )
 from homeassistant.components.template.const import CONF_AVAILABILITY_TEMPLATE
-from homeassistant.components.template.helpers import async_setup_template_platform
+from homeassistant.components.template.helpers import (
+    async_create_template_tracking_entities,
+    validate_template_scripts,
+)
 from homeassistant.components.template.schemas import make_template_entity_base_schema
 from homeassistant.components.template.template_entity import TemplateEntity
 from homeassistant.const import (
@@ -58,12 +61,18 @@ CONF_TARGET_HUMIDITY_STEP = "target_humidity_step"
 CONF_TARGET_HUMIDITY_TEMPLATE = "target_humidity_template"
 CONF_TURN_OFF_ACTION = "turn_off"
 CONF_TURN_ON_ACTION = "turn_on"
+SCRIPT_OPTIONS = (
+    CONF_TURN_ON_ACTION,
+    CONF_TURN_OFF_ACTION,
+    CONF_SET_HUMIDITY_ACTION,
+    CONF_SET_MODE_ACTION,
+)
 
 DEFAULT_NAME = "Template Humidifier"
 DEFAULT_TARGET_HUMIDITY = 50
 DEFAULT_TARGET_HUMIDITY_STEP = 1.0
 DOMAIN = "humidifier_template"
-PLATFORMS = ["humidifier"]
+PLATFORMS = [HUMIDIFIER_DOMAIN]
 
 
 def _humidity(value):
@@ -109,15 +118,13 @@ async def async_setup_platform(
 ):
     """Set up the Template Humidifier."""
     await async_setup_reload_service(hass, DOMAIN, PLATFORMS)
-    await async_setup_template_platform(
-        hass,
-        HUMIDIFIER_DOMAIN,
-        config,
+    await validate_template_scripts(hass, config, SCRIPT_OPTIONS)
+    async_create_template_tracking_entities(
         TemplateHumidifier,
-        None,
         async_add_entities,
-        discovery_info,
-        {},
+        hass,
+        [config],
+        None,
     )
 
 
