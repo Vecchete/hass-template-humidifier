@@ -2,14 +2,15 @@
   "domain": "humidifier_template",
   "name": "Humidifier Template",
   "codeowners": [
+    "@Vecchete",
     "@kei81131"
   ],
   "dependencies": [
     "template"
   ],
-  "documentation": "https://github.com/kei81131/hass-humidifier-template",
+  "documentation": "https://github.com/Vecchete/hass-template-humidifier",
   "iot_class": "calculated",
-  "issue_tracker": "https://github.com/kei81131/hass-humidifier-template/issues",
+  "issue_tracker": "https://github.com/Vecchete/hass-template-humidifier/issues",
   "requirements": [],
-  "version": "1.0.4"
+  "version": "1.0.5"
 }

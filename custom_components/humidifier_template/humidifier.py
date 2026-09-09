@@ -26,7 +26,15 @@ from homeassistant.components.template.helpers import (
     async_create_template_tracking_entities,
     validate_template_scripts,
 )
-from homeassistant.components.template.schemas import make_template_entity_base_schema
+
+try:
+    from homeassistant.components.template.schemas import (
+        make_template_entity_common_schema,
+    )
+except ImportError:
+    from homeassistant.components.template.schemas import (
+        make_template_entity_base_schema as make_template_entity_common_schema,
+    )
 from homeassistant.components.template.template_entity import TemplateEntity
 from homeassistant.const import (
     ATTR_MODE,
@@ -81,7 +89,7 @@ def _humidity(value):
 
 
 PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend(
-    make_template_entity_base_schema(HUMIDIFIER_DOMAIN, DEFAULT_NAME).schema
+    make_template_entity_common_schema(HUMIDIFIER_DOMAIN, DEFAULT_NAME).schema
 ).extend(
     {
         vol.Optional(CONF_AVAILABILITY_TEMPLATE): cv.template,
