@@ -1,0 +1,19 @@
+{
+  "entity": {
+    "humidifier": {
+      "template_humidifier": {
+        "state_attributes": {
+          "action": {
+            "state": {
+              "drying": "Drying",
+              "error": "Error",
+              "humidifying": "Humidifying",
+              "idle": "Idle",
+              "off": "Off"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -86,6 +86,18 @@ DEFAULT_TARGET_HUMIDITY_STEP = 1.0
 DOMAIN = "humidifier_template"
 PLATFORMS = [HUMIDIFIER_DOMAIN]
 
+# Actions this platform accepts beyond HumidifierAction. A physical dehumidifier can be neither
+# drying nor idle: a full tank or a reported fault stops it while it is still switched on, and the
+# core enum has no member for that. Values here are passed through to the state attribute and
+# translated from this integration's own translations/en.json, which the frontend consults first
+# (component.<platform>.entity.<domain>.<translation_key>.state_attributes.action.state.<value>).
+EXTENDED_ACTIONS = frozenset({"error"})
+
+# Set so the frontend looks up action values in this integration's translations. Without it the
+# lookup falls through to core's humidifier namespace, which knows nothing of the values above and
+# renders them raw and lowercase.
+TRANSLATION_KEY = "template_humidifier"
+
 
 def _humidity(value):
     """Validate a humidity value."""
@@ -145,6 +157,7 @@ class TemplateHumidifier(TemplateEntity, HumidifierEntity, RestoreEntity):
     """A template humidifier component."""
 
     _attr_should_poll = False
+    _attr_translation_key = TRANSLATION_KEY
     _entity_id_format = ENTITY_ID_FORMAT
 
     def __init__(self, hass: HomeAssistant, config: ConfigType, unique_id: str | None):
@@ -362,20 +375,25 @@ class TemplateHumidifier(TemplateEntity, HumidifierEntity, RestoreEntity):
             self._attr_mode = mode_str
             self.async_write_ha_state()
 
-    def _coerce_action(self, action) -> HumidifierAction | None:
-        """Convert an action value to HumidifierAction."""
+    def _coerce_action(self, action) -> HumidifierAction | str | None:
+        """Convert an action value to a HumidifierAction or an accepted extension."""
         if action in (None, STATE_UNKNOWN, STATE_UNAVAILABLE):
             return None
 
         try:
             return HumidifierAction(action)
         except ValueError:
-            _LOGGER.error(
-                "Received invalid action: %s. Expected: %s.",
-                action,
-                [member.value for member in HumidifierAction],
-            )
-            return None
+            pass
+
+        if action in EXTENDED_ACTIONS:
+            return action
+
+        _LOGGER.error(
+            "Received invalid action: %s. Expected: %s.",
+            action,
+            [member.value for member in HumidifierAction] + sorted(EXTENDED_ACTIONS),
+        )
+        return None
 
     @callback
     def _update_action(self, action):
