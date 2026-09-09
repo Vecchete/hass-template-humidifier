@@ -24,8 +24,12 @@ from homeassistant.components.humidifier.const import (
 from homeassistant.components.template.const import CONF_AVAILABILITY_TEMPLATE
 from homeassistant.components.template.helpers import (
     async_create_template_tracking_entities,
-    validate_template_scripts,
 )
+
+try:
+    from homeassistant.components.template.helpers import validate_template_scripts
+except ImportError:
+    validate_template_scripts = None
 
 try:
     from homeassistant.components.template.schemas import (
@@ -126,7 +130,8 @@ async def async_setup_platform(
 ):
     """Set up the Template Humidifier."""
     await async_setup_reload_service(hass, DOMAIN, PLATFORMS)
-    await validate_template_scripts(hass, config, SCRIPT_OPTIONS)
+    if validate_template_scripts is not None:
+        await validate_template_scripts(hass, config, SCRIPT_OPTIONS)
     async_create_template_tracking_entities(
         TemplateHumidifier,
         async_add_entities,
