@@ -104,6 +104,26 @@ def _humidity(value):
     return vol.All(vol.Coerce(float), vol.Range(min=0, max=100))(value)
 
 
+# The platform schema accepts these legacy names, but nothing reads them: the modern template
+# entity base handles icon, picture and availability itself under the short names, and this platform
+# never wired the *_template spellings. Left alone they are silently ignored, which is worse than
+# being rejected — an icon_template simply never renders. Map them onto what the base reads.
+LEGACY_TEMPLATE_KEYS = {
+    CONF_ICON_TEMPLATE: "icon",
+    CONF_ENTITY_PICTURE_TEMPLATE: "picture",
+    CONF_AVAILABILITY_TEMPLATE: "availability",
+}
+
+
+def _migrate_legacy_template_keys(config: ConfigType) -> ConfigType:
+    """Return a copy of config with legacy *_template keys under their modern names."""
+    migrated = dict(config)
+    for legacy, modern in LEGACY_TEMPLATE_KEYS.items():
+        if legacy in migrated and modern not in migrated:
+            migrated[modern] = migrated.pop(legacy)
+    return migrated
+
+
 def _integration_version() -> str:
     """Read this integration's version, used to cache-bust the frontend module."""
     try:
@@ -161,6 +181,7 @@ async def async_setup_platform(
     await async_register_frontend(hass, _integration_version())
 
     await async_setup_reload_service(hass, DOMAIN, PLATFORMS)
+    config = _migrate_legacy_template_keys(config)
     if validate_template_scripts is not None:
         await validate_template_scripts(hass, config, SCRIPT_OPTIONS)
     async_create_template_tracking_entities(

@@ -9,6 +9,10 @@ for the `humidifier` domain.
 This is a fork of [kei81131/hass-template-humidifier](https://github.com/kei81131/hass-template-humidifier).
 Everything below is what this copy adds; the rest of the behaviour is unchanged.
 
+The Home Assistant internals these changes rely on — which names move between releases, how
+attribute values are translated, how generated dashboards choose a tile's control, and the traps in
+each — are written up in [docs/home-assistant-internals.md](docs/home-assistant-internals.md).
+
 ### Loads on Home Assistant 2026.9 and later
 
 Upstream cannot start on 2026.9: it imports two names the release removed from the `template`
@@ -62,6 +66,15 @@ The key is assigned on the instance rather than the class, because `Entity`'s me
 entity registry records `translation_key` when an entry is **created**: entities that already exist
 keep whatever they were registered with, so delete the registry entries once after upgrading if the
 translated values do not appear.
+
+### `icon_template`, `entity_picture_template` and `availability_template` actually work
+
+Upstream's schema accepts all three, but the modern template entity base reads `icon`, `picture` and
+`availability`, and the platform never wired the long spellings. They were accepted and then silently
+dropped, so an `icon_template` never rendered and nothing said why.
+
+This fork maps the legacy names onto the modern ones before the entity is built, so either spelling
+works.
 
 ### Minus/plus humidity buttons on generated dashboards
 
