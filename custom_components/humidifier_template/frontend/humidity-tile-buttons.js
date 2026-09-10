@@ -27,8 +27,12 @@
  * degrades to stock Home Assistant rather than a broken dashboard.
  */
 
+// The element tag MUST equal the feature type with the "custom:" prefix stripped. Home Assistant
+// resolves a custom feature with _getCustomTag -> stripCustomPrefix(type) and then
+// customElements.get(tag); any other tag name yields "Custom element doesn't exist" and the tile
+// renders an error card instead of the control.
 const FEATURE_TYPE = "humidity-number-buttons";
-const TAG = "humidity-number-buttons-feature";
+const TAG = FEATURE_TYPE;
 const LOG = "[humidity-tile-buttons]";
 
 // Built-in view strategies whose tiles should get the feature. Tag names are
