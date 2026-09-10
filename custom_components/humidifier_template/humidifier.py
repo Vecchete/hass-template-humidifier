@@ -157,12 +157,16 @@ class TemplateHumidifier(TemplateEntity, HumidifierEntity, RestoreEntity):
     """A template humidifier component."""
 
     _attr_should_poll = False
-    _attr_translation_key = TRANSLATION_KEY
     _entity_id_format = ENTITY_ID_FORMAT
 
     def __init__(self, hass: HomeAssistant, config: ConfigType, unique_id: str | None):
         """Initialize the humidifier device."""
         super().__init__(hass, config, unique_id)
+
+        # On the instance, not the class: Entity's metaclass turns every _attr_ name into a
+        # property, so a class-level assignment does not reach the entity, and the entity registry
+        # records translation_key when the entry is first created.
+        self._attr_translation_key = TRANSLATION_KEY
 
         self._attr_available_modes = config.get(CONF_MODE_LIST)
         self._attr_is_on = False
