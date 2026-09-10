@@ -124,15 +124,17 @@ def _migrate_legacy_template_keys(config: ConfigType) -> ConfigType:
     return migrated
 
 
-def _integration_version() -> str:
-    """Read this integration's version, used to cache-bust the frontend module."""
-    try:
-        import json
-        import os
+async def _integration_version(hass: HomeAssistant) -> str:
+    """Return this integration's version, used to cache-bust the frontend module.
 
-        manifest = os.path.join(os.path.dirname(__file__), "manifest.json")
-        with open(manifest, encoding="utf-8") as file:
-            return str(json.load(file).get("version", "0"))
+    Read through the loader rather than opening manifest.json: Home Assistant has already parsed
+    and cached it, and a plain open() inside the event loop trips the blocking-call detector.
+    """
+    try:
+        from homeassistant.loader import async_get_integration
+
+        integration = await async_get_integration(hass, DOMAIN)
+        return str(integration.version or "0")
     except Exception:  # noqa: BLE001 - a missing version only costs cache-busting
         return "0"
 
@@ -178,7 +180,7 @@ async def async_setup_platform(
     # configuration.yaml key of its own and async_setup is not guaranteed to run.
     from . import async_register_frontend
 
-    await async_register_frontend(hass, _integration_version())
+    await async_register_frontend(hass, await _integration_version(hass))
 
     await async_setup_reload_service(hass, DOMAIN, PLATFORMS)
     config = _migrate_legacy_template_keys(config)
