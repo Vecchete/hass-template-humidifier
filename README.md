@@ -63,6 +63,55 @@ entity registry records `translation_key` when an entry is **created**: entities
 keep whatever they were registered with, so delete the registry entries once after upgrading if the
 translated values do not appear.
 
+### Minus/plus humidity buttons on generated dashboards
+
+Home Assistant's built-in **Climate**, **Home** and **Areas** pages are produced by view
+strategies, and every tile's control is chosen by `computeAreaTileCardConfig` from a fixed chain:
+
+```
+light-brightness -> cover-open-close -> target-temperature -> fan-speed -> alarm-modes -> lock-commands
+```
+
+There is no humidity entry, so a humidifier tile on those pages shows a name and a state and
+nothing to press, while a climate tile beside it gets a `- 20,0 °C +` widget. `target-humidity`
+would not help either: it renders a slider, and the buttons widget
+(`ha-control-number-buttons`) is only wired to the `numeric-input` feature, which accepts
+`number` and `input_number` entities only. None of this is reachable from an integration.
+
+This fork ships a small frontend module that closes the gap:
+
+- it registers a custom card feature, **`custom:humidity-number-buttons`**, rendering the *same*
+  `ha-control-number-buttons` the temperature feature uses, with the unit set to `%`, the bounds
+  taken from `min_humidity` / `max_humidity` / `target_humidity_step`, and changes sent with
+  `humidifier.set_humidity`;
+- it wraps the built-in view strategies so that humidifier tiles they generate carry that feature.
+  `getLovelaceStrategy` resolves a built-in strategy with `customElements.get(tag)` on every
+  regeneration and then calls its static `generate()`, so wrapping that method is a stable seam.
+
+The module is **served and registered by the integration itself** through `add_extra_js_url`, so
+there is nothing to add to `configuration.yaml`, no copy in `www/`, and it returns by itself after
+a restart. The URL carries the integration version as a query string so a new release is not served
+from the browser's cache.
+
+It only ever adds a feature to a tile that has none, and every hook is wrapped: if anything fails,
+the tile degrades to stock Home Assistant rather than breaking the dashboard. You can also place
+the feature by hand on any tile card:
+
+```yaml
+type: tile
+entity: humidifier.humidity_control_bathroom
+features:
+  - type: custom:humidity-number-buttons
+```
+
+Strategies patched: `climate-view-strategy`, `home-area-view-strategy`, `area-view-strategy`,
+`home-overview-view-strategy`, `areas-overview-view-strategy`.
+
+⚠ This is the one part of the fork that reaches into frontend internals, so it is the part most
+likely to need attention after a Home Assistant release. If a generated page loses the buttons,
+check that the strategy tag names above still exist and that `ha-control-number-buttons` still
+takes `value` / `min` / `max` / `step` / `unit`.
+
 ## Installation With HACS
 
 1. Open HACS in Home Assistant.

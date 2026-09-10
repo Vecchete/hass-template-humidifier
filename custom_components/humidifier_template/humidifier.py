@@ -104,6 +104,19 @@ def _humidity(value):
     return vol.All(vol.Coerce(float), vol.Range(min=0, max=100))(value)
 
 
+def _integration_version() -> str:
+    """Read this integration's version, used to cache-bust the frontend module."""
+    try:
+        import json
+        import os
+
+        manifest = os.path.join(os.path.dirname(__file__), "manifest.json")
+        with open(manifest, encoding="utf-8") as file:
+            return str(json.load(file).get("version", "0"))
+    except Exception:  # noqa: BLE001 - a missing version only costs cache-busting
+        return "0"
+
+
 PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend(
     make_template_entity_common_schema(HUMIDIFIER_DOMAIN, DEFAULT_NAME).schema
 ).extend(
@@ -141,6 +154,12 @@ async def async_setup_platform(
     hass: HomeAssistant, config: ConfigType, async_add_entities, discovery_info=None
 ):
     """Set up the Template Humidifier."""
+    # Done here rather than in async_setup, because a platform-only integration has no
+    # configuration.yaml key of its own and async_setup is not guaranteed to run.
+    from . import async_register_frontend
+
+    await async_register_frontend(hass, _integration_version())
+
     await async_setup_reload_service(hass, DOMAIN, PLATFORMS)
     if validate_template_scripts is not None:
         await validate_template_scripts(hass, config, SCRIPT_OPTIONS)
